@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -67,9 +66,9 @@ func serveDir(w http.ResponseWriter, r *http.Request, path string) {
 		fileinfos[i].Mode = files[i].Mode()
 	}
 
-	j := json.NewEncoder(w)
+	// j := json.NewEncoder(w)
 
-	if err := j.Encode(&fileinfos); err != nil {
-		panic(err)
-	}
+	// if err := j.Encode(&fileinfos); err != nil {
+	// 	panic(err)
+	// }
 }
