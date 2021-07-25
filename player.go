@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -13,14 +15,14 @@ type FileInfo struct {
 }
 
 const (
-	filePrefix = "/audio/"
-	root       = "./audio"
+	filePrefix = "/music/"
+	root       = "./music"
 )
 
 func main() {
 	http.HandleFunc("/", playerMainFrame)
 	http.HandleFunc(filePrefix, File)
-	http.ListenAndServe(":8090", nil)
+	http.ListenAndServe(":8080", nil)
 }
 
 func playerMainFrame(w http.ResponseWriter, r *http.Request) {
@@ -29,6 +31,7 @@ func playerMainFrame(w http.ResponseWriter, r *http.Request) {
 
 func File(w http.ResponseWriter, r *http.Request) {
 	path := filepath.Join(root, r.URL.Path[len(filePrefix):])
+	fmt.Println(path)
 	stat, err := os.Stat(path)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -66,9 +69,9 @@ func serveDir(w http.ResponseWriter, r *http.Request, path string) {
 		fileinfos[i].Mode = files[i].Mode()
 	}
 
-	// j := json.NewEncoder(w)
+	j := json.NewEncoder(w)
 
-	// if err := j.Encode(&fileinfos); err != nil {
-	// 	panic(err)
-	// }
+	if err := j.Encode(&fileinfos); err != nil {
+		panic(err)
+	}
 }

@@ -1,109 +1,181 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8" />
-		<title>a simple music player</title>		
-<style>
-	body{
-  		font-family: sans-serif，Verdana, Arial, Helvetica;
-  		font-size: 10pt;
+
+<head>
+	<meta charset="utf-8" />
+	<title>Vishnu player</title>
+	<style>
+		body {
+			font-family: sans-serif，Verdana, Arial, Helvetica;
+			font-size: 10pt;
 		}
-	#playlist {
-		border-radius: 10px;
-		padding: 5px 5px 3px 5px;
-		width: 290px;
-		margin-left: 1px;
-		margin-top: 10px;
-		height: 500px;
-		overflow: auto;
-	}
-	#btn {
-		border-radius: 10px;
-		width: 296px;
-		margin-left: 1px;
-		margin-top:  5px;
-		height: 50px;
-		overflow: auto;
-		background: #EEB422;
-		font-weight: bold;
-		color: white;
-	}
-    #playlist a {
-		display: block;
-		cursor: pointer;
-		padding: 2px 4px;
-		border-radius: 5px;
-		overflow: hidden;
-		margin-bottom: 2px;
-	}
-	#playlist a.file { background: #66CDAA;}
 
-	#playlist { background: #3CB371; }
-	#playlist a { background: #7CCD7C; }
-	#playlist a.playing { background: #9ACD32; font-weight: bold; color: red;}
-	#playlist a:hover { background: #EEC900;}
+		#showCdTime {
+			visibility: hidden;
+		}
 
-</style>
-<script src="http://www.google.com/jsapi" type="text/javascript"></script>
-<script type="text/javascript">
+		/* #showPlayTime {
+			visibility: hidden;
+		} */
 
-var root = "/music/";
-var path = [];
+		/* #number {
+			width: 3em;
+		} */
 
-function init() {
-	load(path);
-	$('#player').bind('ended', next);
-	$('#btn').click(next);
-}
-function load(path)  {
-	var url = root+path.join('/');
-	$.ajax({
-			url: url,
-			dataType: "json",
-			success: function(data) {
-				listFile(data)
-			}
-		});
-}
-function listFile(files) {
-	var $b = $('#playlist').empty();
-	function addToList(i, f) {
-		if (f.Name[0] == '.' || f.Name[0] == ':') return;
-    	var dir = f.IsDir;
-		if(dir) return;
-		f.Path = path.join('/');
-		$('<a></a>').text(f.Name).data('file', f)
-			.addClass("file")
-			.appendTo($b)
-			.click(clickFile);
-	}
-	$.each(files, addToList);
-}
+		/* 
+		#playlist {
+			border-radius: 10px;
+			padding: 5px 5px 3px 5px;
+			width: 290px;
+			margin-left: 1px;
+			margin-top: 10px;
+			height: 500px;
+			overflow: auto;
+		}
 
-function clickFile(e) {
-	var f = $(e.target).data('file');
-	var name = f.Name;
-	var path = f.Path;
-	var url = root+path+'/'+name;
-	$('#playlist a').removeClass('playing');
-	$(e.target).addClass('playing')
-	$('#player').attr('src', url);
-	$('#player').play();
-}
-function next() {
-	var $next = $('#playlist a.playing').next();
-	if ($next.length) $next.click();
-}
+		#btn {
+			border-radius: 10px;
+			width: 296px;
+			margin-left: 1px;
+			margin-top: 5px;
+			height: 50px;
+			overflow: auto;
+			background: #EEB422;
+			font-weight: bold;
+			color: white;
+		}
 
-google.load("jquery", "1.3.1");
-google.setOnLoadCallback(init);
-</script>
-	</head>
-	<body>
-		<audio id="player" controls autoplay autobuffer >
-		<p>What? Your browser doesn't support</p>
-		</audio>
-		<div id="playlist"></div>
-		<BUTTON id ="btn" title = "skip this song!">SKIP</BUTTON>
-	</body>
-</html>
+		#playlist a {
+			display: block;
+			cursor: pointer;
+			padding: 2px 4px;
+			border-radius: 5px;
+			overflow: hidden;
+			margin-bottom: 2px;
+		}
+
+		#playlist a.file {
+			background: #66CDAA;
+		}
+
+		#playlist {
+			background: #3CB371;
+		}
+
+		#playlist a {
+			background: #7CCD7C;
+		}
+
+		#playlist a.playing {
+			background: #9ACD32;
+			font-weight: bold;
+			color: red;
+		}
+
+		#playlist a:hover {
+			background: #EEC900;
+		} */
+	</style>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+	<script type="text/javascript">
+		$(document).ready(init);
+
+		var root = "/music/";
+		var path = [];
+		var playTime = 0;
+		var countDownTime = 0;
+		var volume = 0.3
+
+		function init() {
+			load(path);
+			$('#player').bind("play", play)
+			$('.countdown').bind("change", countdown)
+		}
+
+		function stop(e) {
+			$('#player').animate({ volume: 0 }, 5000, function () {
+				document.getElementById("player").pause();
+
+			});
+		}
+
+		function load(path) {
+			var url = root + path.join('/');
+			$.ajax({
+				url: url,
+				dataType: "json",
+				success: function (data) {
+					var f = data[1];
+					var name = f.Name;
+					var url = root + '/' + name;
+					$('#player').attr('src', url);
+				}
+			});
+		}
+
+		function countdown() {
+			// var countDownTimeElem = $('#countDownTime');
+			// if (countDownTimeElem.val())
+			var countDownDur = $('#countDownTime').val() * 60;
+			
+			var cdElem = document.getElementById("showCdTime");
+			cdElem.style.visibility = "visible";
+
+			startTimer(countDownDur, $("#showCdTime"));
+		}
+
+		function startTimer(duration, display) {
+			var timer = duration, minutes, seconds;
+
+			displayDuration(timer, display);
+			--timer;
+
+			var x = setInterval(function () {
+
+				displayDuration(timer, display)
+				if (--timer < 0) {
+					clearInterval(x);
+					document.getElementById("player").play();
+				}
+			}, 1000);
+		}
+
+		function displayDuration(timer, display) {
+			minutes = parseInt(timer / 60, 10);
+			seconds = parseInt(timer % 60, 10);
+
+			minutes = minutes < 10 ? "0" + minutes : minutes;
+			seconds = seconds < 10 ? "0" + seconds : seconds;
+			// debugger;
+			display.text(minutes + ":" + seconds);
+		}
+
+		function play() {
+			// var currVol = document.getElementById("player").volume;
+			// document.getElementById("player").volume = 0;
+			// $('#player').animate({ volume: currVol }, 3000);
+
+			var showPlayTimeElem = document.getElementById("showPlayTime");
+			showPlayTimeElem.style.visibility = "visible";
+
+			var playTimeDuration = $('#playTime').val() * 60;
+
+			startTimer(playTimeDuration, $("#showPlayTime"));
+			// setTimeout(stop, playTimeDuration * 60 * 1000)
+			// setTimeout(stop, $('#playTime') * 1000)
+		}
+// TODO double duration
+// when it stopes save the settings and save them in the server; when loaded update infos
+// check what happens when replay happens
+	</script>
+</head>
+
+<body>
+	<audio id="player" controls autobuffer loop></audio>
+	<input type="number" id="playTime" name="playTime" min="0" max="42" required>
+	<input type="number" id="countDownTime" name="countDownTime" min="0" max="30">
+	<input type="radio" class="countdown" id="countdown" name="countdown">
+	<span id="showCdTime"></span>
+	<span id="showPlayTime"></span>
+</body>
