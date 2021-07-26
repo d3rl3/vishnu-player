@@ -10,13 +10,44 @@
 			font-size: 10pt;
 		}
 
-		#showCdTime {
-			visibility: hidden;
+		#player {
+			float: left;
+			position: absolute;
 		}
 
-		/* #showPlayTime {
+		#playTime {
+			float: left;
+			position: relative;
+			top: 60px;
+		}
+
+		#countdownTime {
+			float: left;
+			position: relative;
+			top: 60px;
+		}
+
+		#countdown {
+			float: left;
+			position: relative;
+			top: 60px;
+		}
+
+		#showPlayTime {
 			visibility: hidden;
-		} */
+			float: left;
+			position: relative;
+			top: 80px;
+			right: 143px;
+		}
+
+		#showCdTime {
+			visibility: hidden;
+			float: left;
+			position: relative;
+			top: 80px;
+			right: 63px;
+		}
 
 		/* #number {
 			width: 3em;
@@ -84,20 +115,16 @@
 		var root = "/music/";
 		var path = [];
 		var playTime = 0;
-		var countDownTime = 0;
-		var volume = 0.3
+		var countdownTime = 0;
+		var volume = 0.3;
+		var fadeOutDur = 5000;
+		var fadeInDur = 3000;
 
 		function init() {
 			load(path);
 			$('#player').bind("play", play)
-			$('.countdown').bind("change", countdown)
-		}
-
-		function stop(e) {
-			$('#player').animate({ volume: 0 }, 5000, function () {
-				document.getElementById("player").pause();
-
-			});
+			// $('.countdown').bind("change", countdown)
+			$('.countdown').bind("change", sendInfo)
 		}
 
 		function load(path) {
@@ -115,10 +142,10 @@
 		}
 
 		function countdown() {
-			// var countDownTimeElem = $('#countDownTime');
+			// var countDownTimeElem = $('#countdownTime');
 			// if (countDownTimeElem.val())
-			var countDownDur = $('#countDownTime').val() * 60;
-			
+			var countDownDur = $('#countdownTime').val() * 60;
+
 			var cdElem = document.getElementById("showCdTime");
 			cdElem.style.visibility = "visible";
 
@@ -147,14 +174,13 @@
 
 			minutes = minutes < 10 ? "0" + minutes : minutes;
 			seconds = seconds < 10 ? "0" + seconds : seconds;
-			// debugger;
 			display.text(minutes + ":" + seconds);
 		}
 
 		function play() {
 			// var currVol = document.getElementById("player").volume;
 			// document.getElementById("player").volume = 0;
-			// $('#player').animate({ volume: currVol }, 3000);
+			// $('#player').animate({ volume: currVol }, fadeInDur);
 
 			var showPlayTimeElem = document.getElementById("showPlayTime");
 			showPlayTimeElem.style.visibility = "visible";
@@ -162,8 +188,40 @@
 			var playTimeDuration = $('#playTime').val() * 60;
 
 			startTimer(playTimeDuration, $("#showPlayTime"));
-			// setTimeout(stop, playTimeDuration * 60 * 1000)
+			// setTimeout(stop, playTimeDuration * 1000 - fadeOutDur)
 			// setTimeout(stop, $('#playTime') * 1000)
+		}
+
+		function stop(e) {
+			$('#player').animate({ volume: 0 }, fadeOutDur, function () {
+				document.getElementById("player").pause();
+				sendInfo();
+			});
+		}
+
+		class Data {
+			constructor(playTime, countdownTime, currentTime, volume) {
+				this.PlayTime = playTime;
+				this.CountdownTime = countdownTime;
+				this.CurrentTime = currentTime;
+				this.Volume = volume;
+			}
+		}
+
+		function sendInfo() {
+			var obj = new Data();
+			obj.PlayTime = playTime;
+			obj.CountdownTime = countdownTime;
+			obj.CurrentTime = 1;
+			obj.Volume = volume;
+			
+			$.ajax({
+				url: "/data",
+				type: "POST",
+				contentType: 'apllication/json',
+				data: JSON.stringify(obj),
+				dataType: 'json'
+			}).done(function(msg) {alert(msg)});
 		}
 // TODO double duration
 // when it stopes save the settings and save them in the server; when loaded update infos
@@ -174,8 +232,8 @@
 <body>
 	<audio id="player" controls autobuffer loop></audio>
 	<input type="number" id="playTime" name="playTime" min="0" max="42" required>
-	<input type="number" id="countDownTime" name="countDownTime" min="0" max="30">
+	<input type="number" id="countdownTime" name="countdownTime" min="0" max="30">
 	<input type="radio" class="countdown" id="countdown" name="countdown">
-	<span id="showCdTime"></span>
-	<span id="showPlayTime"></span>
+	<span id="showCdTime">5:00</span>
+	<span id="showPlayTime">5:00</span>
 </body>

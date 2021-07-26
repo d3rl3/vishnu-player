@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -21,17 +22,46 @@ const (
 
 func main() {
 	http.HandleFunc("/", playerMainFrame)
-	http.HandleFunc(filePrefix, File)
+	http.HandleFunc(filePrefix, file)
+	http.HandleFunc("/data", data)
 	http.ListenAndServe(":8080", nil)
+}
+
+type Data struct {
+	PlayTime      int
+	CountdownTime int
+	CurrentTime   int
+	Volume        float32
+}
+
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
+func data(w http.ResponseWriter, r *http.Request) {
+	fmt.Print("called")
+
+	var d Data
+
+	err := json.NewDecoder(r.Body).Decode(&d)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	file, _ := json.MarshalIndent(d, "", " ")
+	fmt.Printf("%+v", d)
+	_ = ioutil.WriteFile("data/data.json", file, 0644)
 }
 
 func playerMainFrame(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "./player.html")
 }
 
-func File(w http.ResponseWriter, r *http.Request) {
+func file(w http.ResponseWriter, r *http.Request) {
 	path := filepath.Join(root, r.URL.Path[len(filePrefix):])
-	fmt.Println(path)
+	// fmt.Println(path)
 	stat, err := os.Stat(path)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
