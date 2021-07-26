@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -30,7 +29,7 @@ func main() {
 type Data struct {
 	PlayTime      int
 	CountdownTime int
-	CurrentTime   int
+	CurrentTime   float32
 	Volume        float32
 }
 
@@ -41,8 +40,6 @@ func check(e error) {
 }
 
 func data(w http.ResponseWriter, r *http.Request) {
-	fmt.Print("called")
-
 	var d Data
 
 	err := json.NewDecoder(r.Body).Decode(&d)
@@ -51,7 +48,6 @@ func data(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	file, _ := json.MarshalIndent(d, "", " ")
-	fmt.Printf("%+v", d)
 	_ = ioutil.WriteFile("data/data.json", file, 0644)
 }
 
@@ -82,14 +78,10 @@ func serveDir(w http.ResponseWriter, r *http.Request, path string) {
 	}()
 	file, err := os.Open(path)
 	defer file.Close()
-	if err != nil {
-		panic(err)
-	}
+	check(err)
 
 	files, err := file.Readdir(-1)
-	if err != nil {
-		panic(err)
-	}
+	check(err)
 
 	fileinfos := make([]FileInfo, len(files), len(files))
 

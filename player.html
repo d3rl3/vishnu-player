@@ -122,9 +122,11 @@
 
 		function init() {
 			load(path);
-			$('#player').bind("play", play)
-			// $('.countdown').bind("change", countdown)
-			$('.countdown').bind("change", sendInfo)
+			$('#player').bind("play", play);
+			$('.playTime').bind("change", playTimeChange);
+			$('.countdownTime').bind("change", countdownTimeChange);
+			// $('.countdown').bind("change", countdown);
+			// $('.countdown').bind("change", sendInfo);
 		}
 
 		function load(path) {
@@ -139,6 +141,29 @@
 					$('#player').attr('src', url);
 				}
 			});
+		}
+
+		function playTimeChange() {
+			numberChange("#playTime", "showPlayTime");
+		}
+
+		function countdownTimeChange() {
+			numberChange("#countdownTime", "showCdTime");
+		}
+
+		function numberChange(elemStr, showElemStr) {
+			var elem = $(elemStr);
+			var showElem = document.getElementById(showElemStr);
+			var playTimeVal = elem.val();
+			if (playTimeVal == 0) {
+
+				showElem.style.visibility = "hidden";
+			}
+			else {
+
+				showElem.style.visibility = "visible"
+				displayDuration(playTimeVal*60, $("#" + showElemStr));
+			}
 		}
 
 		function countdown() {
@@ -212,16 +237,16 @@
 			var obj = new Data();
 			obj.PlayTime = playTime;
 			obj.CountdownTime = countdownTime;
-			obj.CurrentTime = 1;
+			obj.CurrentTime = document.getElementById("player").currentTime;
 			obj.Volume = volume;
-			
+
 			$.ajax({
 				url: "/data",
 				type: "POST",
 				contentType: 'apllication/json',
 				data: JSON.stringify(obj),
 				dataType: 'json'
-			}).done(function(msg) {alert(msg)});
+			}).done(function (msg) { alert(msg) });
 		}
 // TODO double duration
 // when it stopes save the settings and save them in the server; when loaded update infos
@@ -231,9 +256,9 @@
 
 <body>
 	<audio id="player" controls autobuffer loop></audio>
-	<input type="number" id="playTime" name="playTime" min="0" max="42" required>
-	<input type="number" id="countdownTime" name="countdownTime" min="0" max="30">
+	<input type="number" class="playTime" id="playTime" name="playTime" min="0" max="42" required>
+	<input type="number" class="countdownTime" id="countdownTime" name="countdownTime" min="0" max="30">
 	<input type="radio" class="countdown" id="countdown" name="countdown">
-	<span id="showCdTime">5:00</span>
-	<span id="showPlayTime">5:00</span>
+	<span id="showPlayTime"></span>
+	<span id="showCdTime"></span>
 </body>
