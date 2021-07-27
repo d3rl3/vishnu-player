@@ -18,35 +18,41 @@
 		#playTime {
 			float: left;
 			position: relative;
-			top: 60px;
+			top: 70px;
 		}
 
 		#countdownTime {
 			float: left;
 			position: relative;
-			top: 60px;
+			top: 70px;
 		}
 
 		#countdown {
 			float: left;
 			position: relative;
-			top: 60px;
+			top: 70px;
 		}
 
 		#showPlayTime {
 			visibility: hidden;
 			float: left;
 			position: relative;
-			top: 80px;
-			right: 143px;
+			top: 90px;
+			right: 185px;
 		}
 
 		#showCdTime {
 			visibility: hidden;
 			float: left;
 			position: relative;
-			top: 80px;
-			right: 63px;
+			top: 90px;
+			right: 160px;
+		}
+
+		label {
+			position: absolute;
+			float: left;
+			top: 60px;
 		}
 
 		/* #number {
@@ -119,14 +125,15 @@
 		var volume = 0.3;
 		var fadeOutDur = 5000;
 		var fadeInDur = 3000;
+		var durationOver = false;
+		var intervals = [];
 
 		function init() {
 			load(path);
 			$('#player').bind("play", play);
+			$('.countdown').bind("click", countdown);
 			$('.playTime').bind("change", playTimeChange);
 			$('.countdownTime').bind("change", countdownTimeChange);
-			// $('.countdown').bind("change", countdown);
-			// $('.countdown').bind("change", sendInfo);
 		}
 
 		function load(path) {
@@ -141,40 +148,86 @@
 					$('#player').attr('src', url);
 				}
 			});
+
+			// TODO use cookies to determine same user
+			$.ajax({
+				url: "/data/load",
+				dataType: "json",
+				success: function (obj) {
+					playTime = obj.PlayTime;
+					countdownTime = obj.CountdownTime;
+					document.getElementById("player").currentTime = obj.CurrentTime;
+					volume = obj.Volume;
+					displayTime(playTime, "showPlayTime");
+					displayTime(countdownTime, "showCdTime");
+				}
+			});
 		}
 
-		function playTimeChange() {
-			numberChange("#playTime", "showPlayTime");
+		function play() {
+			document.getElementById("player").volume = 0;
+			$('#player').animate({ volume: volume }, fadeInDur);
+
+			var playTimeDuration = playTime * 60;
+
+			startTimer(playTimeDuration, $("#showPlayTime"));
+			setTimeout(stop, playTimeDuration * 1000 - fadeOutDur)
 		}
 
-		function countdownTimeChange() {
-			numberChange("#countdownTime", "showCdTime");
+		function stop(e) {
+			$('#player').animate({ volume: 0 }, fadeOutDur, function () {
+				document.getElementById("player").pause();
+				sendInfo();
+			});
 		}
 
-		function numberChange(elemStr, showElemStr) {
-			var elem = $(elemStr);
-			var showElem = document.getElementById(showElemStr);
-			var playTimeVal = elem.val();
-			if (playTimeVal == 0) {
+		class Data {
+			Playtime = 0;
+			CountdownTime = 0;
+			CurrentTime = 0;
+			Volume = 0;
+		}
 
-				showElem.style.visibility = "hidden";
-			}
-			else {
+		function sendInfo() {
+			var obj = new Data();
+			obj.PlayTime = playTime;
+			obj.CountdownTime = countdownTime;
+			obj.CurrentTime = document.getElementById("player").currentTime;
+			obj.Volume = volume;
 
-				showElem.style.visibility = "visible"
-				displayDuration(playTimeVal*60, $("#" + showElemStr));
-			}
+			$.ajax({
+				url: "/data/save",
+				type: "POST",
+				contentType: 'apllication/json',
+				data: JSON.stringify(obj),
+				dataType: 'json'
+			}).done(function (msg) { alert(msg) });
 		}
 
 		function countdown() {
-			// var countDownTimeElem = $('#countdownTime');
-			// if (countDownTimeElem.val())
-			var countDownDur = $('#countdownTime').val() * 60;
+			var button = document.getElementById("countdown");
+			if (button.value == "Start Timer") {
+				button.value = 'Stop Timer';
+			}
+			else {
+				document.getElementById("player").pause();
+				button.value = 'Start Timer';
 
-			var cdElem = document.getElementById("showCdTime");
-			cdElem.style.visibility = "visible";
+				for (interval of intervals) {
+					clearInterval(interval);
+					intervals.pop(interval);
+				}
 
-			startTimer(countDownDur, $("#showCdTime"));
+				displayTime(playTime, "showPlayTime");
+				displayTime(countdownTime, "showCdTime");
+				return;
+			}
+			if (!countdownTime) {
+				document.getElementById("player").play();
+				return;
+			}
+
+			startTimer(countdownTime * 60, $("#showCdTime"));
 		}
 
 		function startTimer(duration, display) {
@@ -182,7 +235,6 @@
 
 			displayDuration(timer, display);
 			--timer;
-
 			var x = setInterval(function () {
 
 				displayDuration(timer, display)
@@ -191,6 +243,7 @@
 					document.getElementById("player").play();
 				}
 			}, 1000);
+			intervals.push(x);
 		}
 
 		function displayDuration(timer, display) {
@@ -202,63 +255,37 @@
 			display.text(minutes + ":" + seconds);
 		}
 
-		function play() {
-			// var currVol = document.getElementById("player").volume;
-			// document.getElementById("player").volume = 0;
-			// $('#player').animate({ volume: currVol }, fadeInDur);
-
-			var showPlayTimeElem = document.getElementById("showPlayTime");
-			showPlayTimeElem.style.visibility = "visible";
-
-			var playTimeDuration = $('#playTime').val() * 60;
-
-			startTimer(playTimeDuration, $("#showPlayTime"));
-			// setTimeout(stop, playTimeDuration * 1000 - fadeOutDur)
-			// setTimeout(stop, $('#playTime') * 1000)
+		function playTimeChange() {
+			playTime = parseInt($('#playTime').val(), 10);
+			displayTime(playTime, "showPlayTime");
 		}
 
-		function stop(e) {
-			$('#player').animate({ volume: 0 }, fadeOutDur, function () {
-				document.getElementById("player").pause();
-				sendInfo();
-			});
+		function countdownTimeChange() {
+			countdownTime = parseInt($('#countdownTime').val(), 10);
+			displayTime(countdownTime, "showCdTime");
 		}
 
-		class Data {
-			constructor(playTime, countdownTime, currentTime, volume) {
-				this.PlayTime = playTime;
-				this.CountdownTime = countdownTime;
-				this.CurrentTime = currentTime;
-				this.Volume = volume;
+		function displayTime(time, showElemStr) {
+			var showElem = document.getElementById(showElemStr);
+			if (time == 0) {
+				showElem.style.visibility = "hidden";
+			}
+			else {
+				showElem.style.visibility = "visible"
+				displayDuration(time * 60, $("#" + showElemStr));
 			}
 		}
 
-		function sendInfo() {
-			var obj = new Data();
-			obj.PlayTime = playTime;
-			obj.CountdownTime = countdownTime;
-			obj.CurrentTime = document.getElementById("player").currentTime;
-			obj.Volume = volume;
-
-			$.ajax({
-				url: "/data",
-				type: "POST",
-				contentType: 'apllication/json',
-				data: JSON.stringify(obj),
-				dataType: 'json'
-			}).done(function (msg) { alert(msg) });
-		}
-// TODO double duration
-// when it stopes save the settings and save them in the server; when loaded update infos
-// check what happens when replay happens
 	</script>
 </head>
 
 <body>
 	<audio id="player" controls autobuffer loop></audio>
+	<label for="playTime">Play</label>
 	<input type="number" class="playTime" id="playTime" name="playTime" min="0" max="42" required>
+	<label for="countdownTime">Countdown</label>
 	<input type="number" class="countdownTime" id="countdownTime" name="countdownTime" min="0" max="30">
-	<input type="radio" class="countdown" id="countdown" name="countdown">
+	<input type="button" class="countdown" value="Start Timer" id="countdown" name="countdown">
 	<span id="showPlayTime"></span>
 	<span id="showCdTime"></span>
 </body>

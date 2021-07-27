@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -21,16 +22,11 @@ const (
 
 func main() {
 	http.HandleFunc("/", playerMainFrame)
+	http.HandleFunc("/data/load", dataLoad)
 	http.HandleFunc(filePrefix, file)
-	http.HandleFunc("/data", data)
-	http.ListenAndServe(":8080", nil)
-}
+	http.HandleFunc("/data/save", dataSave)
 
-type Data struct {
-	PlayTime      int
-	CountdownTime int
-	CurrentTime   float32
-	Volume        float32
+	http.ListenAndServe(":8080", nil)
 }
 
 func check(e error) {
@@ -39,25 +35,13 @@ func check(e error) {
 	}
 }
 
-func data(w http.ResponseWriter, r *http.Request) {
-	var d Data
-
-	err := json.NewDecoder(r.Body).Decode(&d)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	file, _ := json.MarshalIndent(d, "", " ")
-	_ = ioutil.WriteFile("data/data.json", file, 0644)
-}
-
 func playerMainFrame(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "./player.html")
 }
 
 func file(w http.ResponseWriter, r *http.Request) {
 	path := filepath.Join(root, r.URL.Path[len(filePrefix):])
-	// fmt.Println(path)
+
 	stat, err := os.Stat(path)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -96,4 +80,34 @@ func serveDir(w http.ResponseWriter, r *http.Request, path string) {
 	if err := j.Encode(&fileinfos); err != nil {
 		panic(err)
 	}
+}
+
+func dataLoad(w http.ResponseWriter, r *http.Request) {
+	response, err := ioutil.ReadFile("data/data.json")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNoContent)
+		return
+	}
+
+	fmt.Fprintf(w, string(response))
+}
+
+type Data struct {
+	PlayTime      int
+	CountdownTime int
+	CurrentTime   float32
+	Volume        float32
+}
+
+func dataSave(w http.ResponseWriter, r *http.Request) {
+	var d Data
+	err := json.NewDecoder(r.Body).Decode(&d)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNoContent)
+		return
+	}
+
+	file, _ := json.MarshalIndent(d, "", " ")
+	_ = ioutil.WriteFile("data/data.json", file, 0755)
 }
