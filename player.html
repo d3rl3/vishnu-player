@@ -54,64 +54,6 @@
 			float: left;
 			top: 60px;
 		}
-
-		/* #number {
-			width: 3em;
-		} */
-
-		/* 
-		#playlist {
-			border-radius: 10px;
-			padding: 5px 5px 3px 5px;
-			width: 290px;
-			margin-left: 1px;
-			margin-top: 10px;
-			height: 500px;
-			overflow: auto;
-		}
-
-		#btn {
-			border-radius: 10px;
-			width: 296px;
-			margin-left: 1px;
-			margin-top: 5px;
-			height: 50px;
-			overflow: auto;
-			background: #EEB422;
-			font-weight: bold;
-			color: white;
-		}
-
-		#playlist a {
-			display: block;
-			cursor: pointer;
-			padding: 2px 4px;
-			border-radius: 5px;
-			overflow: hidden;
-			margin-bottom: 2px;
-		}
-
-		#playlist a.file {
-			background: #66CDAA;
-		}
-
-		#playlist {
-			background: #3CB371;
-		}
-
-		#playlist a {
-			background: #7CCD7C;
-		}
-
-		#playlist a.playing {
-			background: #9ACD32;
-			font-weight: bold;
-			color: red;
-		}
-
-		#playlist a:hover {
-			background: #EEC900;
-		} */
 	</style>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 
@@ -125,12 +67,13 @@
 		var volume = 0.3;
 		var fadeOutDur = 5000;
 		var fadeInDur = 3000;
-		var durationOver = false;
 		var intervals = [];
+		var finished = false;
 
 		function init() {
 			load(path);
 			$('#player').bind("play", play);
+			$('#player').bind("pause", pause);
 			$('.countdown').bind("click", countdown);
 			$('.playTime').bind("change", playTimeChange);
 			$('.countdownTime').bind("change", countdownTimeChange);
@@ -157,9 +100,8 @@
 					playTime = obj.PlayTime;
 					countdownTime = obj.CountdownTime;
 					document.getElementById("player").currentTime = obj.CurrentTime;
-					volume = obj.Volume;
-					displayTime(playTime, "showPlayTime");
-					displayTime(countdownTime, "showCdTime");
+					document.getElementById("player").volume = volume = obj.Volume;
+					displayTimers();
 				}
 			});
 		}
@@ -174,10 +116,23 @@
 			setTimeout(stop, playTimeDuration * 1000 - fadeOutDur)
 		}
 
+		function pause() {
+			if (!finished) {
+				for (interval of intervals) {
+					clearInterval(interval);
+					intervals.pop(interval);
+				}
+				displayTimers();
+			}
+			finished = false;
+		}
+
 		function stop(e) {
 			$('#player').animate({ volume: 0 }, fadeOutDur, function () {
+				finished = true;
 				document.getElementById("player").pause();
 				sendInfo();
+				displayTimers();
 			});
 		}
 
@@ -218,8 +173,7 @@
 					intervals.pop(interval);
 				}
 
-				displayTime(playTime, "showPlayTime");
-				displayTime(countdownTime, "showCdTime");
+				displayTimers();
 				return;
 			}
 			if (!countdownTime) {
@@ -262,6 +216,11 @@
 
 		function countdownTimeChange() {
 			countdownTime = parseInt($('#countdownTime').val(), 10);
+			displayTime(countdownTime, "showCdTime");
+		}
+
+		function displayTimers() {
+			displayTime(playTime, "showPlayTime");
 			displayTime(countdownTime, "showCdTime");
 		}
 
