@@ -3,7 +3,10 @@
 
 <head>
 	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width", initial-scale=1.0>
 	<title>Vishnu player</title>
+	<!-- <link rel="manifest" href="client/manifest.json"> -->
+	<!-- <link rel="shortcut icon" href="favicon.ico" type="image/x-icon"> -->
 	<style>
 		body {
 			font-family: sans-serif，Verdana, Arial, Helvetica;
@@ -54,69 +57,14 @@
 			float: left;
 			top: 60px;
 		}
-
-		/* #number {
-			width: 3em;
-		} */
-
-		/* 
-		#playlist {
-			border-radius: 10px;
-			padding: 5px 5px 3px 5px;
-			width: 290px;
-			margin-left: 1px;
-			margin-top: 10px;
-			height: 500px;
-			overflow: auto;
-		}
-
-		#btn {
-			border-radius: 10px;
-			width: 296px;
-			margin-left: 1px;
-			margin-top: 5px;
-			height: 50px;
-			overflow: auto;
-			background: #EEB422;
-			font-weight: bold;
-			color: white;
-		}
-
-		#playlist a {
-			display: block;
-			cursor: pointer;
-			padding: 2px 4px;
-			border-radius: 5px;
-			overflow: hidden;
-			margin-bottom: 2px;
-		}
-
-		#playlist a.file {
-			background: #66CDAA;
-		}
-
-		#playlist {
-			background: #3CB371;
-		}
-
-		#playlist a {
-			background: #7CCD7C;
-		}
-
-		#playlist a.playing {
-			background: #9ACD32;
-			font-weight: bold;
-			color: red;
-		}
-
-		#playlist a:hover {
-			background: #EEC900;
-		} */
 	</style>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 
 	<script type="text/javascript">
 		$(document).ready(init);
+		// if ('serviceWorker' in navigator) {
+		// 	navigator.serviceWorker.register('./service_worker.js');
+		// }
 
 		var root = "/music/";
 		var path = [];

@@ -1,2 +1,2 @@
 run:
-	go run player.go lookup.go dataHandling.go
+	go run src/server/player.go src/server/fileLookup.go src/server/dataHandling.go

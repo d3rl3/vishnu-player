@@ -14,7 +14,7 @@ type FileInfo struct {
 }
 
 func PlayerMainFrame(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "./player.html")
+	http.ServeFile(w, r, "src/client/player.html")
 }
 
 func File(w http.ResponseWriter, r *http.Request) {
@@ -30,6 +30,12 @@ func File(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.ServeFile(w, r, path)
+}
+
+func ServiceWorker(w http.ResponseWriter, r *http.Request) {
+	// fmt.Println(r.URL.Path)
+
+	// http.ServeFile(w, r, r.URL.Path)
 }
 
 func serveDir(w http.ResponseWriter, r *http.Request, path string) {
